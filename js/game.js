@@ -12,6 +12,11 @@
   const JUMP_VELOCITY = 560;
   const GRAVITY = 1500;
   const FALL_PX = 360;
+  const PEEL_LIFE = 3;
+  const PEEL_WIDTH = 56;
+  const PEEL_HEIGHT = 28;
+  const SLIDE_SPEED = 440;
+  const SLIDE_DISTANCE = 230;
 
   const ITEM_TYPES = [
     { type: "carrot", score: 1, weight: 36, fall: 3 },
@@ -74,7 +79,10 @@
     rabbitY: 0,
     jumpV: 0,
     airJumps: 0,
+    slideRemain: 0,
+    slideDir: 1,
     items: [],
+    peels: [],
     keys: new Set(),
     lastTs: 0,
     tickEpoch: 0,
@@ -123,6 +131,8 @@
     rabbitEl.classList.toggle("airborne", state.rabbitY > 1);
     rabbitEl.classList.toggle("rising", state.jumpV > 40);
     rabbitEl.classList.toggle("falling", state.rabbitY > 1 && state.jumpV < -40);
+    rabbitEl.classList.toggle("sliding", isSliding());
+    rabbitEl.classList.toggle("slide-left", isSliding() && state.slideDir < 0);
   }
 
   function setRabbitX(x) {
@@ -200,10 +210,32 @@
     return state.stunTimer > 0;
   }
 
+  function isSliding() {
+    return state.slideRemain > 0;
+  }
+
+  function clearSlide() {
+    state.slideRemain = 0;
+    rabbitEl.classList.remove("sliding", "slide-left");
+    state.targetX = state.rabbitX;
+    state.rabbitV = 0;
+  }
+
+  function startSlide() {
+    if (!isSliding()) {
+      const fromSpeed = Math.sign(state.rabbitV);
+      const fromAim = Math.sign(state.targetX - state.rabbitX);
+      state.slideDir = fromSpeed || fromAim || state.slideDir || 1;
+    }
+    state.slideRemain += SLIDE_DISTANCE;
+    applyRabbitPosition();
+  }
+
   function clearStun() {
     state.stunTimer = 0;
-    rabbitEl.classList.remove("shake", "faint", "sad", "airborne", "rising", "falling");
+    rabbitEl.classList.remove("shake", "faint", "sad", "airborne", "rising", "falling", "sliding", "slide-left");
     landRabbit();
+    clearSlide();
     state.targetX = state.rabbitX;
     state.rabbitV = 0;
   }
@@ -212,6 +244,7 @@
     state.stunTimer = SHAKE_SECONDS + FAINT_SECONDS;
     state.rabbitV = 0;
     state.targetX = state.rabbitX;
+    clearSlide();
     landRabbit();
     rabbitEl.classList.remove("happy", "sad", "joy", "faint", "shake");
     void rabbitEl.offsetWidth;
@@ -283,9 +316,52 @@
     item.el.remove();
   }
 
+  function spawnPeel(x) {
+    const peelX = clamp(x, 28, gameEl.clientWidth - 28);
+    const y = gameEl.clientHeight - groundBottom() - 20;
+    const el = document.createElement("div");
+    el.className = "item peel";
+    el.innerHTML = '<div class="food"></div>';
+    el.style.left = `${peelX}px`;
+    el.style.top = `${y}px`;
+    itemsEl.appendChild(el);
+    state.peels.push({
+      el,
+      x: peelX,
+      y,
+      life: PEEL_LIFE,
+    });
+  }
+
+  function removePeel(index) {
+    const [peel] = state.peels.splice(index, 1);
+    peel.el.remove();
+  }
+
+  function footBox() {
+    const rabbit = rabbitEl.getBoundingClientRect();
+    const game = gameEl.getBoundingClientRect();
+    return {
+      left: rabbit.left - game.left + rabbit.width * 0.16,
+      right: rabbit.right - game.left - rabbit.width * 0.16,
+      top: rabbit.bottom - game.top - rabbit.height * 0.24,
+      bottom: rabbit.bottom - game.top,
+    };
+  }
+
+  function hitPeel(peel, box) {
+    const left = peel.x - PEEL_WIDTH / 2;
+    const right = peel.x + PEEL_WIDTH / 2;
+    const top = peel.y;
+    const bottom = peel.y + PEEL_HEIGHT;
+    return left < box.right && right > box.left && top < box.bottom && bottom > box.top;
+  }
+
   function clearItems() {
     state.items.forEach((item) => item.el.remove());
     state.items = [];
+    state.peels.forEach((peel) => peel.el.remove());
+    state.peels = [];
     popupsEl.innerHTML = "";
   }
 
@@ -344,21 +420,39 @@
 
     const moveSpeed = 520;
     if (!isStunned()) {
-      if (state.keys.has("ArrowLeft") || state.keys.has("a") || state.keys.has("A")) {
-        state.targetX -= moveSpeed * dt;
-      }
-      if (state.keys.has("ArrowRight") || state.keys.has("d") || state.keys.has("D")) {
-        state.targetX += moveSpeed * dt;
-      }
-
       const maxX = gameEl.clientWidth - rabbitWidth();
-      state.targetX = clamp(state.targetX, 0, maxX);
 
-      const response = state.rabbitY > 1 ? 0.09 : 0.14;
-      const omega = 2 / Math.max(response, 0.001);
-      const accel = omega * omega * (state.targetX - state.rabbitX) - 2 * omega * state.rabbitV;
-      state.rabbitV += accel * dt;
-      setRabbitX(state.rabbitX + state.rabbitV * dt);
+      if (isSliding()) {
+        const step = SLIDE_SPEED * dt;
+        let nextX = state.rabbitX + state.slideDir * step;
+        if (nextX < 0 || nextX > maxX) {
+          state.slideDir *= -1;
+          nextX = clamp(nextX, 0, maxX);
+        }
+        state.rabbitX = nextX;
+        state.rabbitV = state.slideDir * SLIDE_SPEED;
+        state.slideRemain -= step;
+        if (state.slideRemain <= 0) {
+          clearSlide();
+        } else {
+          applyRabbitPosition();
+        }
+      } else {
+        if (state.keys.has("ArrowLeft") || state.keys.has("a") || state.keys.has("A")) {
+          state.targetX -= moveSpeed * dt;
+        }
+        if (state.keys.has("ArrowRight") || state.keys.has("d") || state.keys.has("D")) {
+          state.targetX += moveSpeed * dt;
+        }
+
+        state.targetX = clamp(state.targetX, 0, maxX);
+
+        const response = state.rabbitY > 1 ? 0.09 : 0.14;
+        const omega = 2 / Math.max(response, 0.001);
+        const accel = omega * omega * (state.targetX - state.rabbitX) - 2 * omega * state.rabbitV;
+        state.rabbitV += accel * dt;
+        setRabbitX(state.rabbitX + state.rabbitV * dt);
+      }
 
       if (state.rabbitY > 0 || state.jumpV !== 0) {
         state.jumpV -= GRAVITY * dt;
@@ -415,7 +509,29 @@
       }
 
       if (item.y > gameEl.clientHeight - gameEl.clientHeight * 0.08) {
+        if (item.type === "banana") {
+          spawnPeel(swayX);
+        }
         removeItem(i);
+      }
+    }
+
+    for (let i = state.peels.length - 1; i >= 0; i -= 1) {
+      const peel = state.peels[i];
+      peel.life -= dt;
+      peel.el.classList.toggle("gone", peel.life < 0.35);
+      if (peel.life <= 0) {
+        removePeel(i);
+      }
+    }
+
+    if (!isStunned() && state.rabbitY < 14) {
+      const feet = footBox();
+      for (let i = state.peels.length - 1; i >= 0; i -= 1) {
+        if (hitPeel(state.peels[i], feet)) {
+          startSlide();
+          removePeel(i);
+        }
       }
     }
 
@@ -444,6 +560,7 @@
     gameEl.classList.add("is-playing");
     state.rabbitV = 0;
     landRabbit();
+    clearSlide();
     clearStun();
     hidePause();
     pauseBtn.hidden = false;
@@ -470,7 +587,7 @@
 
   function bindControls() {
     const moveTo = (clientX) => {
-      if (!state.running || state.paused || isStunned()) return;
+      if (!state.running || state.paused || isStunned() || isSliding()) return;
       state.targetX = pointerToX(clientX);
     };
 
@@ -482,7 +599,7 @@
       const target = event.target instanceof Element ? event.target : event.target.parentElement;
       if (target?.closest("button") || target?.closest(".overlay")) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
-      moveTo(event.clientX);
+      if (!isSliding()) moveTo(event.clientX);
       tryJump();
     });
 

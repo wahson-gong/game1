@@ -488,6 +488,61 @@ body {
   border-radius: 50%;
 }
 
+.item.peel {
+  width: 56px;
+  height: 28px;
+  z-index: 2;
+  animation: peel-drop 0.34s var(--ease-out);
+}
+
+.item.peel .food {
+  width: 48px;
+  height: 16px;
+  margin: 8px auto 0;
+  background: linear-gradient(180deg, #ffe98a 0%, var(--banana) 48%, #d4a80a 100%);
+  border-radius: 50% 50% 46% 46%;
+  position: relative;
+  box-shadow: 0 3px 0 rgba(90, 70, 20, 0.12);
+}
+
+.item.peel .food::before,
+.item.peel .food::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  width: 16px;
+  height: 18px;
+  background: linear-gradient(180deg, #fff3a0, var(--banana) 60%, #e0a800);
+  border-radius: 60% 40% 70% 30%;
+}
+
+.item.peel .food::before {
+  left: 1px;
+  transform: rotate(-38deg);
+}
+
+.item.peel .food::after {
+  right: 1px;
+  transform: rotate(38deg);
+  border-radius: 40% 60% 30% 70%;
+}
+
+.item.peel.gone {
+  opacity: 0;
+  transition: opacity 0.32s var(--ease-out);
+}
+
+@keyframes peel-drop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -14px) scale(0.86, 1.16);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1, 1);
+  }
+}
+
 .score-popup {
   position: absolute;
   font-size: 22px;
@@ -538,6 +593,35 @@ body {
 
 .rabbit.falling .rabbit-body {
   transform: scale(1.05, 0.94);
+}
+
+.rabbit.sliding .rabbit-body {
+  transform: rotate(-16deg) translate(8px, 3px);
+}
+
+.rabbit.sliding.slide-left .rabbit-body {
+  transform: rotate(16deg) translate(-8px, 3px);
+}
+
+.rabbit.sliding .rabbit-shadow {
+  transform: scale(1.18, 0.72);
+  opacity: 0.42;
+}
+
+.rabbit.sliding.rising .rabbit-body {
+  transform: rotate(-14deg) translate(8px, 3px) scale(0.96, 1.06);
+}
+
+.rabbit.sliding.slide-left.rising .rabbit-body {
+  transform: rotate(14deg) translate(-8px, 3px) scale(0.96, 1.06);
+}
+
+.rabbit.sliding.falling .rabbit-body {
+  transform: rotate(-18deg) translate(8px, 3px) scale(1.05, 0.94);
+}
+
+.rabbit.sliding.slide-left.falling .rabbit-body {
+  transform: rotate(18deg) translate(-8px, 3px) scale(1.05, 0.94);
 }
 
 .rabbit.happy .mouth {
@@ -1036,7 +1120,8 @@ body {
   .rabbit.joy .rabbit-shadow,
   .rabbit.shake .rabbit-body,
   .dizzy span,
-  .cloud {
+  .cloud,
+  .item.peel {
     animation: none;
   }
 }
