@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>小兔兔接食物</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="game" class="game">
+      <div class="sky">
+        <div class="sun"></div>
+        <div class="cloud cloud-a"></div>
+        <div class="cloud cloud-b"></div>
+        <div class="cloud cloud-c"></div>
+      </div>
+      <div class="hills"></div>
+      <div class="ground"></div>
+      <div id="items" class="items"></div>
+      <div id="popups" class="popups"></div>
+
+      <div id="rabbit" class="rabbit" aria-hidden="true">
+        <div class="rabbit-shadow"></div>
+        <div class="rabbit-body">
+          <div class="ear left"><i></i></div>
+          <div class="ear right"><i></i></div>
+          <div class="face">
+            <div class="blush left"></div>
+            <div class="blush right"></div>
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="nose"></div>
+            <div class="mouth"></div>
+          </div>
+          <div class="belly"></div>
+          <div class="arm left"></div>
+          <div class="arm right"></div>
+          <div class="foot left"></div>
+          <div class="foot right"></div>
+          <div class="tail"></div>
+          <div class="dizzy" aria-hidden="true">
+            <span>✦</span>
+            <span>✧</span>
+            <span>✦</span>
+          </div>
+        </div>
+      </div>
+
+      <header class="hud">
+        <div class="hud-left">
+          <div class="hud-card">
+            <span>得分</span>
+            <strong id="score">0</strong>
+          </div>
+          <ul class="hud-stats" aria-label="食物得分明细">
+            <li>
+              <span class="icon banana-icon"></span>
+              <span class="stat-name">香蕉</span>
+              <span id="banana-count">0个</span>
+              <strong id="banana-score">0分</strong>
+            </li>
+            <li>
+              <span class="icon strawberry-icon"></span>
+              <span class="stat-name">草莓</span>
+              <span id="strawberry-count">0个</span>
+              <strong id="strawberry-score">0分</strong>
+            </li>
+            <li>
+              <span class="icon veggie-icon"></span>
+              <span class="stat-name">青菜</span>
+              <span id="veggie-count">0个</span>
+              <strong id="veggie-score">0分</strong>
+            </li>
+            <li>
+              <span class="icon carrot-icon"></span>
+              <span class="stat-name">胡萝卜</span>
+              <span id="carrot-count">0个</span>
+              <strong id="carrot-score">0分</strong>
+            </li>
+            <li>
+              <span class="icon cake-icon"></span>
+              <span class="stat-name">巧克力蛋糕</span>
+              <span id="cake-count">0个</span>
+              <strong id="cake-score">0分</strong>
+            </li>
+          </ul>
+        </div>
+        <div class="hud-right">
+          <div class="hud-card">
+            <span>时间</span>
+            <strong id="time">60</strong>
+          </div>
+          <button id="music-btn" class="music-btn" type="button" aria-label="关闭背景音乐">
+            🎵 音乐开
+          </button>
+          <button id="pause-btn" class="music-btn pause-btn" type="button" aria-label="暂停游戏" hidden>
+            暂停
+          </button>
+        </div>
+      </header>
+
+      <section id="start-screen" class="overlay">
+        <div class="panel">
+          <p class="badge">H5 小游戏</p>
+          <h1>小兔兔接食物</h1>
+          <p class="lead">左右移动小兔兔，接住天上掉下来的好吃的！</p>
+          <ul class="rules">
+            <li><span class="icon banana-icon"></span>香蕉 <b>+6</b></li>
+            <li><span class="icon strawberry-icon"></span>草莓 <b>+4</b></li>
+            <li><span class="icon veggie-icon"></span>青菜 <b>+2</b></li>
+            <li><span class="icon carrot-icon"></span>胡萝卜 <b>+1</b></li>
+            <li><span class="icon cake-icon"></span>巧克力蛋糕 <b>-3</b></li>
+          </ul>
+          <p class="hint">点击屏幕可以跳起来接食物，连点最多跳 3 次；空中也能跟着鼠标左右移动</p>
+          <button id="start-btn" type="button">开始游戏</button>
+        </div>
+      </section>
+
+      <section id="pause-screen" class="overlay hidden" hidden>
+        <div class="panel">
+          <h2>已暂停</h2>
+          <p class="lead">点继续，小兔兔就会接着接食物</p>
+          <button id="resume-btn" type="button">继续游戏</button>
+        </div>
+      </section>
+
+      <section id="end-screen" class="overlay hidden" hidden>
+        <div class="panel">
+          <h2>时间到啦</h2>
+          <p class="lead">小兔兔这一轮吃到了：</p>
+          <p class="final-score"><strong id="final-score">0</strong> 分</p>
+          <p class="best">历史最好：<span id="best-score">0</span> 分</p>
+          <button id="restart-btn" type="button">再玩一次</button>
+        </div>
+      </section>
+    </div>
+    <script src="js/game.js"></script>
+  </body>
+</html>
